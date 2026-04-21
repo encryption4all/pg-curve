@@ -26,4 +26,4 @@ New versions are published manually to [crates.io](https://crates.io/crates/pg_c
 
 ## License
 
-MIT OR Apache-2.0
+Dual-licensed at your option under either [MIT](LICENSE-MIT) or [Apache-2.0](LICENSE-APACHE), matching the upstream [`bls12_381`](https://github.com/zkcrypto/bls12_381) crate. This is the standard Rust ecosystem licensing arrangement and is declared as `license = "MIT/Apache-2.0"` in `Cargo.toml`.
