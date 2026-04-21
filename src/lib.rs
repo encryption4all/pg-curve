@@ -22,6 +22,20 @@
 // In our library, some of the arithmetic involving extension fields will necessarily
 // involve various binary operators, and so this lint is triggered unnecessarily.
 #![allow(clippy::suspicious_arithmetic_impl)]
+// Pre-existing clippy warnings from the upstream bls12_381 crate.
+// These are intentional patterns in the elliptic curve arithmetic code.
+#![allow(clippy::needless_borrow)]
+#![allow(clippy::op_ref)]
+#![allow(clippy::clone_on_copy)]
+#![allow(clippy::wrong_self_convention)]
+#![allow(clippy::bool_assert_comparison)]
+#![allow(clippy::identity_op)]
+#![allow(clippy::needless_borrows_for_generic_args)]
+// The digest 0.9 dependency uses generic_array 0.14 which is deprecated
+// in favor of generic_array 1.x. Upgrading requires bumping digest to 0.10+.
+#![allow(deprecated)]
+// Upstream uses cfg(feature = "std") but the crate has no std feature.
+#![allow(unexpected_cfgs)]
 
 #[cfg(feature = "alloc")]
 extern crate alloc;
