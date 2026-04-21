@@ -1,3 +1,29 @@
-# PostGuard curve library [![Crates.io](https://img.shields.io/crates/v/pg_curve.svg)](https://crates.io/crates/pg_curve)
+# <p align="center"><img src="./img/pg_logo.svg" height="128px" alt="PostGuard" /></p>
 
-This crate is a fork of the [BLS12-381 pairing-friendly elliptic curve construction crate](https://github.com/zkcrypto/bls12_381), providing serialisation. This crate is forked because the maintainers of BLS12-381 do not wish to merge the proposed serialisation standard in [merge request #12](https://github.com/zkcrypto/bls12_381/pull/12). This crate should be up to date with upstream, with the `gt-serialisation` branch merged.
+> For full documentation, visit [docs.postguard.eu](https://docs.postguard.eu/repos/pg-curve).
+
+A fork of the [BLS12-381 pairing-friendly elliptic curve construction](https://github.com/zkcrypto/bls12_381) crate, adding target group serialization. This fork exists because the upstream maintainers do not wish to merge the proposed serialization standard ([zkcrypto/bls12_381#12](https://github.com/zkcrypto/bls12_381/pull/12)). The crate tracks upstream with the `gt-serialisation` branch merged.
+
+In the PostGuard ecosystem, pg-curve is the lowest-level building block. The `ibe` crate depends on it for all BLS12-381 curve arithmetic.
+
+## Development
+
+Build the crate with all features:
+
+```sh
+cargo build --all-features
+```
+
+Run tests:
+
+```sh
+cargo test
+```
+
+## Releasing
+
+New versions are published manually to [crates.io](https://crates.io/crates/pg_curve). Bump the version in `Cargo.toml`, commit, tag, and run `cargo publish`. See `RELEASES.md` for version history.
+
+## License
+
+Dual-licensed at your option under either [MIT](LICENSE-MIT) or [Apache-2.0](LICENSE-APACHE), matching the upstream [`bls12_381`](https://github.com/zkcrypto/bls12_381) crate. This is the standard Rust ecosystem licensing arrangement and is declared as `license = "MIT/Apache-2.0"` in `Cargo.toml`.
