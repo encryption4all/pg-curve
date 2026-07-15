@@ -1,7 +1,4 @@
-
----
-
-## Agent notes (migrated from the dobby memory repo)
+# Agent notes (migrated from the dobby memory repo)
 
 ## Overview
 `encryption4all/pg-curve` is a fork of `zcash/bls12_381` with target-group (Gt)
@@ -26,24 +23,22 @@ The only fork-specific code worth auditing is Gt/target-group serialization
 sound. Both Gt deserialization paths gate on `Fp12::is_element()` (checks `x^r ==
 1`, order-r subgroup membership), so no invalid or small-subgroup element
 deserializes. `map_scalar` is standard RFC 9380 (L=48 wide reduction);
-`expand_msg` DST-oversize handling is RFC-compliant. Two real, low-severity
-issues are already tracked as draft advisories, don't re-file: GHSA-fvcv-prjx-g334
-(Scalar `Debug`/`Display` leaks key material, no `ZeroizeOnDrop`; `init_expand`
-panics as a DoS when `ell>255`) and GHSA-953f-523g-fprm (`len_in_bytes as u16`
-truncating cast).
+`expand_msg` DST-oversize handling is RFC-compliant. Two low-severity issues are
+tracked privately, don't re-file.
 
 ## MSRV
 - Rust 1.80.0 (raised from 1.56.0).
 - `rayon-core` 1.13.0 (transitive via the `criterion` dev-dep) requires Rust
   1.80+.
-- `ci.yml` hardcodes `toolchain: 1.56.0` in the lint, test, and no-std jobs;
-  those need a human to bump to 1.80.0 (the bot lacks the `workflows`
-  permission).
+- `ci.yml` and `rust-toolchain.toml` both pin `1.80.0`.
 - All 127 tests pass on 1.80.0.
 - **Lock-file lesson:** there's no committed `Cargo.lock` (library convention),
   so CI always resolves latest deps; dev-dep chains (criterion -> rayon ->
   crossbeam) are what actually drive MSRV breakage. Always `rm Cargo.lock`
-  before testing locally to mirror CI.
+  before testing locally to mirror CI. Concretely, a fresh resolution pulls
+  `zeroize 1.9.0`, which requires `edition2024` and fails to build on 1.80.0; the
+  "127 tests pass" claim above holds only after `cargo update -p zeroize
+  --precise 1.8.1` (pin `<1.9`).
 
 ## Build / test
 - `cargo check` (library only) works on very old Rust.
@@ -66,5 +61,6 @@ fixing requires bumping to `digest 0.10+` (an API-changing bump).
 - `lints-beta.yml`: Clippy beta (push only, continue-on-error).
 - Bitrot, doc-links, fmt, and clippy-MSRV jobs read `rust-toolchain.toml` (no
   explicit toolchain); updating that file fixes them.
-- Lint, test, and no-std jobs hardcode `toolchain: 1.56.0` with `override:
-  true`; `rust-toolchain.toml` does NOT fix these, they need a manual edit.
+- Lint, test, and no-std jobs pin `toolchain: 1.80.0` explicitly with `override:
+  true`, so `rust-toolchain.toml` does not govern them; bumping the MSRV means
+  editing both.
