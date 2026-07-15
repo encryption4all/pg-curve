@@ -1,7 +1,7 @@
 # Agent notes (migrated from the dobby memory repo)
 
 ## Overview
-`encryption4all/pg-curve` is a fork of `zcash/bls12_381` with target-group (Gt)
+`encryption4all/pg-curve` is a fork of `zkcrypto/bls12_381` with target-group (Gt)
 serialization added. Used by `ibe` (with features `groups`, `pairings`, `alloc`,
 `bits`). `edition = "2021"`, `#![no_std]`, `#![deny(unsafe_code)]`. Dual licensed
 MIT/Apache-2.0.
@@ -48,7 +48,8 @@ tracked privately, don't re-file.
 
 ## Clippy
 Many pre-existing warnings come from upstream `bls12_381` code. `lib.rs` has
-`#![allow(...)]` for: needless_borrow, op_ref, clone_on_copy,
+`#![allow(...)]` for: too_many_arguments, many_single_char_names,
+suspicious_arithmetic_impl, needless_borrow, op_ref, clone_on_copy,
 wrong_self_convention, bool_assert_comparison, identity_op,
 needless_borrows_for_generic_args, deprecated (generic_array), unexpected_cfgs.
 The `deprecated` warnings come from `digest 0.9` using `generic_array 0.14`;
