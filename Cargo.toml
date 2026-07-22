@@ -8,6 +8,7 @@ name = "pg-curve"
 repository = "https://github.com/encryption4all/pg-curve"
 version = "0.2.0"
 edition = "2021"
+rust-version = "1.80.0"
 
 [package.metadata.docs.rs]
 rustdoc-args = [ "--html-in-header", "katex-header.html" ]
