@@ -1083,3 +1083,38 @@ fn test_compressed() {
 
     assert_eq!(gt, gt2);
 }
+
+#[test]
+fn test_gt_identity_roundtrip() {
+    // The identity element must survive both serialization forms.
+    let id = Gt::identity();
+
+    let buf = id.to_uncompressed();
+    assert_eq!(Gt::from_uncompressed(&buf).unwrap(), id);
+
+    let buf = id.to_compressed();
+    assert_eq!(Gt::from_compressed(&buf).unwrap(), id);
+}
+
+#[test]
+fn test_gt_from_compressed_requires_compression_flag() {
+    // `from_compressed` gates on the most-significant (compression) bit; clearing
+    // it on an otherwise-valid encoding must reject the input.
+    let gt =
+        pairing(&G1Affine::generator(), &G2Affine::generator()) * Scalar::from_raw([1, 2, 3, 4]);
+    let mut buf = gt.to_compressed();
+    assert_eq!(buf[0] >> 7 & 1, 1);
+
+    // Clear the compression flag; the coordinate bytes are unaffected because
+    // `from_compressed_unchecked` masks away the two flag bits before parsing.
+    buf[0] &= 0b0111_1111;
+    assert!(bool::from(Gt::from_compressed(&buf).is_none()));
+}
+
+#[test]
+fn test_gt_from_uncompressed_rejects_malformed() {
+    // An all-ones buffer encodes Fp elements larger than the field modulus, so
+    // deserialization must fail rather than yield a bogus element.
+    let buf = [0xffu8; 576];
+    assert!(bool::from(Gt::from_uncompressed(&buf).is_none()));
+}
