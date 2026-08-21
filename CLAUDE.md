@@ -1,67 +1,50 @@
-# Agent notes (migrated from the dobby memory repo)
+# pg-curve
 
-## Overview
-`encryption4all/pg-curve` is a fork of `zkcrypto/bls12_381` with target-group (Gt)
-serialization added. Used by `ibe` (with features `groups`, `pairings`, `alloc`,
-`bits`). `edition = "2021"`, `#![no_std]`, `#![deny(unsafe_code)]`. Dual licensed
-MIT/Apache-2.0.
+A fork of [`zkcrypto/bls12_381`](https://github.com/zkcrypto/bls12_381) that adds
+target-group (Gt) serialization. Upstream declined the serialization standard
+([zkcrypto/bls12_381#12](https://github.com/zkcrypto/bls12_381/pull/12)), so the fork
+carries it. `no_std`, `#![deny(unsafe_code)]`, published to crates.io by hand.
 
-## Repo quirks
-- Fork remote `upstream` points to `Wassasin/irmaseal-curve`; always pass
-  `--repo encryption4all/pg-curve` to `gh` commands, or they target upstream
-  instead.
-- Issues are disabled on this repo; `gh issue create` errors ("the repository has
-  disabled issues"). Surface findings as a draft PR instead, or open them on
-  `encryption4all/dobby`.
-- No `pr-title.yml`.
-- Manual release process, no automation.
+## Position
 
-## Security surface (deep-reviewed 2026-07-07, clean)
-The only fork-specific code worth auditing is Gt/target-group serialization
-(`pairings.rs` `to/from_(un)compressed`, `fp12.rs`) and
-`hash_to_curve/map_scalar.rs`; the rest is upstream `bls12_381` 0.8.0. Verdict:
-sound. Both Gt deserialization paths gate on `Fp12::is_element()` (checks `x^r ==
-1`, order-r subgroup membership), so no invalid or small-subgroup element
-deserializes. `map_scalar` is standard RFC 9380 (L=48 wide reduction);
-`expand_msg` DST-oversize handling is RFC-compliant. Two low-severity issues are
-tracked privately, don't re-file.
+The lowest layer of PostGuard's Rust stack. `ibe` does its BLS12-381 arithmetic here,
+`pg-core` sits on `ibe`, and `postguard-js`, `postguard-dotnet` and
+`postguard-business` sit on `pg-core`. So a change to curve arithmetic or to a
+serialized encoding reaches the whole PostGuard family, and nothing in this repo's
+tests will say so. The coupling is a published crates.io version range rather than a
+build: a change here reaches `pg-core` only through an `ibe` release that `pg-core` is
+then bumped to. Encoding changes are governed by `postguard`'s `COMPATIBILITY.md`, and
+a break in one surfaces in `postguard-e2e` before it surfaces here.
 
-## MSRV
-- Rust 1.80.0 (raised from 1.56.0).
-- `rayon-core` 1.13.0 (transitive via the `criterion` dev-dep) requires Rust
-  1.80+.
-- `ci.yml` and `rust-toolchain.toml` both pin `1.80.0`.
-- All 127 tests pass on 1.80.0.
-- **Lock-file lesson:** there's no committed `Cargo.lock` (library convention),
-  so CI always resolves latest deps; dev-dep chains (criterion -> rayon ->
-  crossbeam) are what actually drive MSRV breakage. Always `rm Cargo.lock`
-  before testing locally to mirror CI. Concretely, a fresh resolution pulls
-  `zeroize 1.9.0`, which requires `edition2024` and fails to build on 1.80.0; the
-  "127 tests pass" claim above holds only after `cargo update -p zeroize
-  --precise 1.8.1` (pin `<1.9`).
+Being a fork is the other half of the position. Ours is the Gt serialization
+(`pairings.rs`, `fp12.rs`) and `hash_to_curve/map_scalar.rs`; the rest is upstream
+`bls12_381`. A bug outside those files is an upstream bug, and a change to them is
+divergence someone carries at the next upstream merge.
 
-## Build / test
-- `cargo check` (library only) works on very old Rust.
-- `cargo test --features experimental,zeroize` runs 127 tests.
-- `cargo build --benches --examples --all-features` for bitrot checking.
-- No-std targets: `thumbv6m-none-eabi`, `wasm32-unknown-unknown`, `wasm32-wasi`.
+## Sibling repos to consider
 
-## Clippy
-Many pre-existing warnings come from upstream `bls12_381` code. `lib.rs` has
-`#![allow(...)]` for: too_many_arguments, many_single_char_names,
-suspicious_arithmetic_impl, needless_borrow, op_ref, clone_on_copy,
-wrong_self_convention, bool_assert_comparison, identity_op,
-needless_borrows_for_generic_args, deprecated (generic_array), unexpected_cfgs.
-The `deprecated` warnings come from `digest 0.9` using `generic_array 0.14`;
-fixing requires bumping to `digest 0.10+` (an API-changing bump).
+- `encryption4all/ibe` — the only consumer of this crate. (`ibs` is not one: it is on
+  `curve25519-dalek`.)
+- `encryption4all/postguard` — `pg-core`, the PKG and `COMPATIBILITY.md`; the root of
+  the family.
+- `encryption4all/postguard-docs` — `docs.postguard.eu/repos/pg-curve`, where this
+  repo's documentation lives.
 
-## CI workflows
-- `ci.yml`: lint (fmt), test (ubuntu/macOS/windows), no-std, bitrot, doc-links,
-  rustfmt.
-- `lints-stable.yml`: Clippy MSRV (PRs only).
-- `lints-beta.yml`: Clippy beta (push only, continue-on-error).
-- Bitrot, doc-links, fmt, and clippy-MSRV jobs read `rust-toolchain.toml` (no
-  explicit toolchain); updating that file fixes them.
-- Lint, test, and no-std jobs pin `toolchain: 1.80.0` explicitly with `override:
-  true`, so `rust-toolchain.toml` does not govern them; bumping the MSRV means
-  editing both.
+One company, two GitHub orgs. `encryption4all` is the vehicle the PostGuard research
+project used to apply for grants, kept as an org after Yivi bought PostGuard;
+`privacybydesign` is the Yivi/IRMA lineage. The split is historical, not
+organisational: same company, same maintainers, same review conventions. We are
+maintainers here rather than upstream contributors.
+
+## Where the operational knowledge is
+
+Not in this file. Documentation belongs at `docs.postguard.eu/repos/pg-curve`; a
+durable check belongs in the rule bundle, which the host lands in the next container at
+`~/dobby-rules.md`. A test in `tests/claude_md_orientation.rs` holds this file to
+4,000 bytes.
+
+The agent-notes corpus this file used to be (MSRV lessons, the clippy allow list, the
+CI job layout, a 2026-07-07 security review) is in git history at `7a62ffe`, the last
+revision carrying it (`git show 7a62ffe:CLAUDE.md`). It had already rotted there: it
+said the repo carries no committed `Cargo.lock`, which stopped being true at `d699009`,
+and it named `ibe`'s feature set wrongly.
