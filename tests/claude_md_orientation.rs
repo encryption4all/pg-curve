@@ -37,7 +37,8 @@ fn claude_md_stays_orientation_sized() {
 }
 
 /// The headings the agent-notes corpus was filed under. A byte count alone passes a
-/// small junk drawer, and every one of these grew from a single line.
+/// small junk drawer, and every one of these grew from a single line. `Overview` is
+/// deliberately absent: its content is what the intro and `## Position` now carry.
 const DELETED_SECTIONS: [&str; 6] = [
     "Repo quirks",
     "Security surface",
@@ -52,16 +53,17 @@ fn claude_md_has_no_heading_from_the_deleted_corpus() {
     let body = read();
     let headings: Vec<&str> = body
         .lines()
-        .filter_map(|line| line.strip_prefix("## "))
+        .filter_map(|line| line.trim_start().strip_prefix('#'))
+        .map(|h| h.trim_start_matches('#'))
         .map(str::trim)
         .collect();
     for section in DELETED_SECTIONS {
         // Prefix, not equality: the security section carried a parenthetical date.
         assert!(
             !headings.iter().any(|h| h.starts_with(section)),
-            "CLAUDE.md has a \"## {section}\" heading again. That section went with the \
-             agent-notes corpus: its content is derivable from the repo's own files, a binding \
-             rule, or documentation on docs.postguard.eu now."
+            "CLAUDE.md has a \"{section}\" heading again, at any depth. That section went \
+             with the agent-notes corpus: its content is derivable from the repo's own \
+             files, a binding rule, or documentation on docs.postguard.eu now."
         );
     }
 }
